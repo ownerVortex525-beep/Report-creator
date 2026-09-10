@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Report — CyberForce Case Report System</title>
+  <link rel="stylesheet" href="css/style.css?v=14" onerror="this.onerror=null;this.href='style.css';">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap" rel="stylesheet">
+  <style>
+    .step-panel{display:none}
+    .step-panel.show{display:block}
+    .page-bar{display:flex;justify-content:space-between;align-items:center;padding-top:26px;gap:12px;flex-wrap:wrap}
+    #themeToggle{background:var(--ink);color:#fff;border-color:var(--ink)}
+    #themeToggle:hover{background:#000;color:#fff}
+    body[data-theme="dark"] #themeToggle{background:#fff;color:#000;border-color:#fff}
+    body[data-theme="dark"] #themeToggle:hover{background:#e6e6e6;color:#000}
+    body[data-theme="dark"] .btn-line-b{border-color:#fff;color:#fff}
+    body[data-theme="dark"] .btn-line-b:hover{background:#fff;color:#000}
+    .skin-switch{display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+    .skin-switch label{font-size:.85rem;display:flex;gap:6px;align-items:center;cursor:pointer;color:var(--muted)}
+    body[data-theme="dark"] .skin-switch label{color:var(--muted-inv)}
+    #photoPreview{max-width:150px;border:1px solid #111;margin-top:8px;background:#fff}
+    /* ===== CASE-FILE SHEET ===== */
+    #reportPreview{margin-top:24px}
+    .sheetpage{background:#fff;color:#111;max-width:820px;margin:0 auto 22px;border:1px solid #bbb;font-family:'IBM Plex Sans','Segoe UI',Arial,sans-serif;position:relative;box-shadow:0 2px 10px rgba(0,0,0,.25)}
+    .sp-head{background:#0b2447;color:#fff;padding:16px 28px;border-bottom:3px solid #1d4ed8}
+    .sp-head h1{font-family:'IBM Plex Serif',Georgia,serif;font-size:20px;letter-spacing:.04em;color:#fff;margin:0;text-align:center}
+    .sp-head .sp-sub{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#9db7e8;margin-top:4px;text-align:center}
+    .sp-meta{padding:12px 28px;border-bottom:1px solid #ddd;font-family:'IBM Plex Mono',monospace;font-size:11px}
+    .sp-meta span{display:inline-block;margin-right:24px}
+    .sp-sec{margin:18px 28px 10px;padding:7px 12px;background:#eef2f8;border-left:4px solid #1d4ed8;font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:.16em}
+    .ctable{width:100%;border-collapse:collapse;font-size:12.5px;margin:0 0 6px}
+    .ctable td{padding:7px 28px;border-bottom:1px solid #e3e3e3;vertical-align:top}
+    .ctable td.rl{width:42%;font-weight:600;color:#222}
+    .ctable td.rv{word-break:break-word}
+    .ctable .mono{font-family:'IBM Plex Mono',monospace;font-size:11.5px}
+    .suswrap{position:relative;padding-right:175px}
+    .suswrap .ctable td{padding-right:12px}
+    .pbox{position:absolute;top:6px;right:28px;width:132px;border:1px solid #888;background:#fff;padding:5px;text-align:center}
+    .pbox img{width:120px;height:auto;display:block;margin:0 auto}
+    .pbox .pcap{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#555;margin-top:4px;font-family:'IBM Plex Mono',monospace}
+    .descbox{margin:0 28px 10px;font-size:12.5px;white-space:pre-wrap;line-height:1.6}
+    .ex2{float:left;width:46%;margin:0 4% 16px 0;border:1px solid #888;background:#fff;padding:6px}
+    .ex2 img{width:100%;height:auto;display:block}
+    .ex2 .excap{font-size:10px;font-family:'IBM Plex Mono',monospace;margin-top:5px;word-break:break-all}
+    .clear{clear:both}
+    .stampbox{margin:14px 28px;height:90px;border:1px dashed #99a;font-size:10px;color:#667;text-align:center;line-height:90px;letter-spacing:.14em}
+    .sigblock{margin:16px 28px;font-size:12.5px}
+    .sigblock .sline{display:block;margin-bottom:12px}
+    .sigblock .line{display:inline-block;width:220px;border-bottom:1px solid #111}
+    .sp-foot{padding:10px 28px;border-top:1px solid #ccc;font-size:9.5px;color:#666;font-family:'IBM Plex Mono',monospace}
+    .sheetpage.black{background:#000;color:#e8e8e8;border-color:#333}
+    .sheetpage.black .sp-head{background:#000;border-bottom-color:#1d4ed8}
+    .sheetpage.black .sp-sec{background:#101826;color:#cfe0ff}
+    .sheetpage.black .ctable td{border-bottom-color:#222}
+    .sheetpage.black .ctable td.rl{color:#ddd}
+    .sheetpage.black .pbox{background:#000;border-color:#555}
+    .sheetpage.black .pbox .pcap{color:#aaa}
+    .sheetpage.black .ex2{background:#000;border-color:#555}
+    .sheetpage.black .sp-foot{border-top-color:#333;color:#999}
+    .sheetpage.black .stampbox{border-color:#556;color:#99a}
+    /* ===== v13: spine + badge + legal ===== */
+    .sp-spine{position:absolute;left:0;top:0;bottom:0;width:7px;background:linear-gradient(180deg,#0b2447 0%,#1d4ed8 50%,#0b2447 100%)}
+    .sp-legal{margin:6px 28px 12px;font-size:10.5px;color:#556;font-family:'IBM Plex Mono',monospace}
+    .sheetpage.black .sp-legal{color:#99a}
+    /* ===== v14: letterhead ===== */
+    .sp-headtable{width:100%;border-collapse:collapse}
+    .sp-headtable td{vertical-align:middle;padding:0;border:none}
+    .sp-headtable .hl{width:58px}
+    .sp-headtable .hr{width:66px;text-align:right}
+    .hlogo{width:46px;height:46px;border-radius:6px;border:1px solid #ffd75e;object-fit:cover;display:block}
+    .hflag{width:54px;height:36px;display:block;margin-left:auto;border:1px solid rgba(255,255,255,.45)}
+    .sp-tricolor{display:table;width:100%;height:4px}
+    .sp-tricolor span{display:table-cell}
+    .sp-tricolor span:nth-child(1){background:#FF9933}
+    .sp-tricolor span:nth-child(2){background:#f5f5f5}
+    .sp-tricolor span:nth-child(3){background:#138808}
+    @media print{
+      body *{visibility:hidden}
+      #reportPreview,#reportPreview *{visibility:visible}
+      #reportPreview{position:absolute;inset:0}
+      .sheetpage{box-shadow:none;border:none;margin:0 0 12px}
+    }
+  </style>
+</head>
+<body data-theme="dark">
+
+  <header class="navbar">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">
+        <img src="assets/logo.png" alt="CyberForce" class="brand-logo" onerror="this.style.display='none'">
+        <span class="brand-name">CYBER<em>FORCE</em></span>
+        <span class="brand-tag">Case Report System</span>
+      </a>
+      <nav class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="report.html" class="active">Create Report</a>
+        <a href="verify.html">Verify</a>
+        <a href="my-reports.html">My Reports</a>
+        <a href="rules.html">Rules</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="portal-bar">
+    <div class="container portal-inner">
+      <span><svg style="width:22px;height:15px;margin-right:8px;vertical-align:-2px" viewBox="0 0 60 40"><rect width="60" height="13.4" fill="#FF9933"/><rect y="13.3" width="60" height="13.4" fill="#ffffff"/><rect y="26.7" width="60" height="13.3" fill="#138808"/><circle cx="30" cy="20" r="5.5" fill="none" stroke="#000080" stroke-width="1.2"/></svg>CyberForce Secure Portal — Report Filing (v14)</span>
+      <span class="portal-lock">Processed only on your device</span>
+    </div>
+  </div>
+
+  <div class="container page-bar">
+    <p class="overline">Official Report Builder</p>
+    <button class="btn btn-small" id="themeToggle">Light Mode</button>
+  </div>
+
+  <main class="container">
+    <div class="wizard">
+      <aside>
+        <ol class="wizard-steps">
+          <li data-step="1" class="active"><span class="num">1</span>Suspect Information</li>
+          <li data-step="2"><span class="num">2</span>Crime Details</li>
+          <li data-step="3"><span class="num">3</span>Description</li>
+          <li data-step="4"><span class="num">4</span>Evidence</li>
+          <li data-step="5"><span class="num">5</span>Officer Use</li>
+          <li data-step="6"><span class="num">6</span>Declaration</li>
+          <li data-step="7"><span class="num">7</span>Export</li>
+        </ol>
+      </aside>
+
+      <section class="wizard-panel">
+
+        <div class="step-panel show" data-step="1">
+          <h2 class="panel-title">Suspect Information</h2>
+          <p class="panel-sub">Fill in whatever details you have. Blank fields are skipped in the final report.</p>
+          <div class="field"><label>Suspect / Accused Name</label><input id="sName" type="text" placeholder="Full name or username"></div>
+          <div class="field"><label>Suspect Photograph (optional)</label><input id="sPhoto" type="file" accept="image/*"><img id="photoPreview" style="display:none" alt="Suspect photograph"></div>
+          <div class="grid-2">
+            <div class="field"><label>Primary Phone Number</label><input id="sPhone" type="tel" placeholder="+91 XXXXX XXXXX"></div>
+            <div class="field"><label>Alternative Number</label><input id="sAltPhone" type="tel"></div>
+          </div>
+          <div class="field"><label>Payment Methods (Bank Account / Card / Other)</label><input id="sPayment" type="text" placeholder="Account number / bank name"></div>
+          <div class="grid-2">
+            <div class="field"><label>UPI ID</label><input id="sUpi" type="text" placeholder="name@bank"></div>
+            <div class="field"><label>Crypto Wallet Address</label><input id="sCrypto" type="text" placeholder="BTC / USDT / TRX"></div>
+          </div>
+          <div class="grid-2">
+            <div class="field"><label>Instagram Username</label><input id="sInsta" type="text" placeholder="@username"></div>
+            <div class="field"><label>Telegram Username</label><input id="sTgUser" type="text" placeholder="@username"></div>
+          </div>
+          <div class="grid-2">
+            <div class="field"><label>Telegram ID (numeric)</label><input id="sTgId" type="text"></div>
+            <div class="field"><label>Other (Email / Website / App)</label><input id="sOther" type="text"></div>
+          </div>
+          <div class="field"><label>Social Media Accounts (all)</label><textarea id="sSocial" rows="3" placeholder="Facebook, X, Snapchat, YouTube..."></textarea></div>
+        </div>
+
+        <div class="step-panel" data-step="2">
+          <h2 class="panel-title">Crime Details</h2>
+          <p class="panel-sub">Basic information about the incident.</p>
+          <div class="grid-2">
+            <div class="field"><label>Crime Type</label>
+              <select id="cType"><option>Fraud</option><option>Phishing</option><option>Blackmail / Sextortion</option><option>Job Scam</option><option>Identity Theft</option><option>Other</option></select>
+            </div>
+            <div class="field"><label>Platform Used</label>
+              <select id="cPlatform"><option>Call</option><option>WhatsApp</option><option>Telegram</option><option>Instagram</option><option>Website</option><option>Other</option></select>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="field"><label>Date and Time of Incident</label><input id="cDate" type="datetime-local"></div>
+            <div class="field"><label>Place / City of Incident</label><input id="cPlace" type="text" placeholder="City / area"></div>
+          </div>
+          <div class="field"><label>Amount Lost (if any)</label><input id="cAmount" type="text" placeholder="Rs."></div>
+        </div>
+
+        <div class="step-panel" data-step="3">
+          <h2 class="panel-title">Description</h2>
+          <p class="panel-sub">Guided format: what happened, how it happened, the loss, and what was demanded.</p>
+          <div class="field"><textarea id="dText" rows="9" placeholder="Write the full incident details..."></textarea></div>
+          <p class="panel-sub"><span id="wordCount">0 words</span></p>
+        </div>
+
+        <div class="step-panel" data-step="4">
+          <h2 class="panel-title">Evidence</h2>
+          <p class="panel-sub">Upload screenshots (portrait or landscape). A Crop & Zoom editor opens — set and press SAVE. Images stay sharp and never stretch.</p>
+          <div class="dropzone" id="dropzone">Click or drag and drop screenshots here</div>
+          <input type="file" id="fileInput" accept="image/*" multiple hidden>
+          <div class="exhibit-grid" id="exhibitGrid"></div>
+        </div>
+
+        <div class="step-panel" data-step="5">
+          <h2 class="panel-title">Officer Use</h2>
+          <p class="panel-sub">Optional for the complainant. Completed by the investigating officer after submission.</p>
+          <div class="grid-2">
+            <div class="field"><label>Received By (Officer Name / ID)</label><input id="oReceived" type="text"></div>
+            <div class="field"><label>Station / Department / Unit</label><input id="oStation" type="text"></div>
+          </div>
+          <div class="field"><label>Case Status</label>
+            <select id="oStatus"><option value="">—</option><option>Open</option><option>Under Investigation</option><option>Closed</option></select>
+          </div>
+          <div class="field"><label>Officer Remarks</label><textarea id="oRemarks" rows="3"></textarea></div>
+        </div>
+
+        <div class="step-panel" data-step="6">
+          <h2 class="panel-title">Declaration</h2>
+          <div class="field"><label>Complainant Name *</label><input id="dName" type="text"></div>
+          <div class="field"><label>Complainant Contact</label><input id="dContact" type="text"></div>
+          <div class="field">
+            <label style="display:flex;gap:8px;align-items:flex-start;text-transform:none;letter-spacing:0;font-size:.88rem;color:inherit">
+              <input id="declCheck" type="checkbox" style="width:auto;margin-top:4px">
+              I declare that the information provided in this report is true to my knowledge. This report is prepared for submission to the cyber cell / police. Providing false information is a punishable offence.
+            </label>
+          </div>
+        </div>
+
+        <div class="step-panel" data-step="7">
+          <h2 class="panel-title">Export</h2>
+          <p class="panel-sub">Case ID: <b id="caseIdView">—</b></p>
+          <div class="skin-switch">
+            <label><input type="radio" name="skin" value="white" checked> Official White (police-ready)</label>
+            <label><input type="radio" name="skin" value="black"> Black (sharing copy)</label>
+          </div>
+          <div class="wizard-actions" style="margin-top:0">
+            <button class="btn btn-navy" id="btnPdf">Download PDF</button>
+            <button class="btn btn-navy" id="btnDoc">Download DOC</button>
+            <button class="btn btn-line-b" id="btnPrint">Print</button>
+          </div>
+          <div id="reportPreview"></div>
+        </div>
+
+        <div class="wizard-actions">
+          <button class="btn btn-line-b" id="btnBack">Back</button>
+          <button class="btn btn-gold" id="btnNext">Next Section</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <div class="foot-bottom">© 2026 CyberForce Case Report System (v14). For education and documentation only.</div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
+
+  <script src="js/tracker.js?v=14"></script>
+  <script src="js/evidence.js?v=14"></script>
+  <script src="js/caseid.js?v=14"></script>
+  <script src="js/wizard.js?v=14"></script>
+  <script src="js/export-pdf.js?v=14"></script>
+  <script src="js/export-docx.js?v=14"></script>
+</body>
+</html>
