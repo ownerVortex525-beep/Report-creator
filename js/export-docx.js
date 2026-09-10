@@ -1,16 +1,20 @@
-/* ============ CyberForce DOCX Export v15 ============ */
-console.log('CyberForce docx v15 loaded');
+/* ============ CyberForce DOCX Export v16 ============ */
+console.log('CyberForce docx v16 loaded');
 
 document.getElementById('btnDoc').addEventListener('click', async () => {
   const d = window.__CF_LAST_DATA;
-  if (!d) { alert('Generate the preview first.'); return; }
+  if (!d) { alert('Please generate the preview first.'); return; }
 
   const btn = document.getElementById('btnDoc');
+  const origText = btn.textContent;
   btn.disabled = true; 
   btn.textContent = 'Generating DOCX...';
 
   try {
-    const { Document, Packer, Paragraph, TextRun, ImageRun, Table, TableRow, TableCell, WidthType, BorderStyle } = window.docx;
+    const docxLib = window.docx;
+    if (!docxLib) { throw new Error('DOCX library not loaded. Please check script imports.'); }
+
+    const { Document, Packer, Paragraph, TextRun, ImageRun, Table, TableRow, TableCell, WidthType, BorderStyle } = docxLib;
 
     const noBorders = {
       top: { style: BorderStyle.NONE, size: 0, color: "AUTO" },
@@ -19,172 +23,188 @@ document.getElementById('btnDoc').addEventListener('click', async () => {
       right: { style: BorderStyle.NONE, size: 0, color: "AUTO" }
     };
 
-    const lightBorder = {
-      top: { style: BorderStyle.SINGLE, size: 1, color: "E2E8F0" },
-      bottom: { style: BorderStyle.SINGLE, size: 1, color: "E2E8F0" },
-      left: { style: BorderStyle.NONE, size: 0, color: "AUTO" },
-      right: { style: BorderStyle.NONE, size: 0, color: "AUTO" }
+    const tableBorder = {
+      top: { style: BorderStyle.SINGLE, size: 1, color: "CBD5E1" },
+      bottom: { style: BorderStyle.SINGLE, size: 1, color: "CBD5E1" },
+      left: { style: BorderStyle.SINGLE, size: 1, color: "CBD5E1" },
+      right: { style: BorderStyle.SINGLE, size: 1, color: "CBD5E1" }
     };
 
-    const H = (t) => new Paragraph({
-      children: [new TextRun({ text: t, bold: true, size: 22, color: "0E7490", font: "Calibri" })],
-      spacing: { before: 240, after: 120 }
+    const bytes = dataUrl => {
+      if (!dataUrl || !dataUrl.includes(',')) return null;
+      try {
+        const bin = atob(dataUrl.split(',')[1]);
+        const b = new Uint8Array(bin.length);
+        for (let j = 0; j < bin.length; j++) b[j] = bin.charCodeAt(j);
+        return b;
+      } catch(e) { return null; }
+    };
+
+    const sectionHeader = (num, title) => new Paragraph({
+      children: [
+        new TextRun({ text: num + '. ', bold: true, size: 20, color: "38BDF8", font: "Arial" }),
+        new TextRun({ text: title.toUpperCase(), bold: true, size: 20, color: "FFFFFF", font: "Arial" })
+      ],
+      shading: { fill: "0F172A" },
+      spacing: { before: 180, after: 120 }
     });
 
-    const createTableRow = (label, value) => {
-      if (!value) return null;
+    const createRow = (label, val, isMono) => {
+      if (!val) return null;
       return new TableRow({
         children: [
           new TableCell({
-            width: { size: 35, type: WidthType.PERCENTAGE },
-            children: [new Paragraph({ children: [new TextRun({ text: label, bold: true, size: 18, color: "475569", font: "Calibri" })] })],
-            borders: lightBorder
+            width: { size: 32, type: WidthType.PERCENTAGE },
+            shading: { fill: "F8FAFC" },
+            children: [new Paragraph({ children: [new TextRun({ text: label, bold: true, size: 17, color: "334155", font: "Arial" })] })],
+            borders: tableBorder
           }),
           new TableCell({
-            width: { size: 65, type: WidthType.PERCENTAGE },
-            children: [new Paragraph({ children: [new TextRun({ text: String(value), size: 18, color: "0F172A", font: "Calibri" })] })],
-            borders: lightBorder
+            width: { size: 68, type: WidthType.PERCENTAGE },
+            children: [new Paragraph({ children: [new TextRun({ text: String(val), size: 17, color: "0F172A", font: isMono ? "Courier New" : "Arial" })] })],
+            borders: tableBorder
           })
         ]
       });
     };
 
-    const buildTable = (dataArr) => {
-      const rows = dataArr.map(([l, v]) => createTableRow(l, v)).filter(Boolean);
-      if (rows.length === 0) return new Paragraph({ text: 'None', spacing: { after: 100 } });
+    const buildDataGrid = (arr) => {
+      const rows = arr.map(([l, v, m]) => createRow(l, v, m)).filter(Boolean);
+      if (!rows.length) return new Paragraph({ text: 'No data provided.', spacing: { after: 100 } });
       return new Table({ rows, width: { size: 100, type: WidthType.PERCENTAGE } });
-    };
-
-    const bytes = dataUrl => {
-      const bin = atob(dataUrl.split(',')[1]);
-      const b = new Uint8Array(bin.length);
-      for (let j = 0; j < bin.length; j++) b[j] = bin.charCodeAt(j);
-      return b;
     };
 
     const children = [];
 
-    // Title Section
+    // Masthead Header
     children.push(new Paragraph({
-      children: [new TextRun({ text: 'CYBERFORCE EVIDENCE REPORT', bold: true, size: 30, color: "0F172A", font: "Calibri" })],
+      children: [
+        new TextRun({ text: 'CYBER', bold: true, size: 32, color: "0F172A", font: "Arial" }),
+        new TextRun({ text: 'FORCE', size: 32, color: "0284C7", font: "Arial" }),
+        new TextRun({ text: '  |  OFFICIAL EVIDENCE REPORT', bold: true, size: 20, color: "64748B", font: "Arial" })
+      ],
       spacing: { after: 40 }
     }));
     children.push(new Paragraph({
-      children: [new TextRun({ text: 'Official Case File — Confidential', italics: true, size: 18, color: "64748B", font: "Calibri" })],
-      spacing: { after: 120 }
+      children: [new TextRun({ text: 'National Cyber Crime Investigation Network  Â·  Case Ref: [' + d.caseId + ']', size: 16, color: "475569", font: "Arial" })],
+      spacing: { after: 160 }
     }));
 
-    // Metadata Table
-    children.push(buildTable([
-      ['Case File No', d.caseId],
-      ['Date of Report', d.date],
-      ['Complaint Against', d.suspect.name || 'Unidentified / Unknown']
-    ]));
-
-    // 1. Suspect Info
-    children.push(H('1. Suspect Information'));
-    if (d.suspect.photo && d.suspect.photoW) {
-      children.push(new Paragraph({
-        children: [new ImageRun({ type: 'png', data: bytes(d.suspect.photo), transformation: { width: d.suspect.photoW, height: d.suspect.photoH } })],
-        spacing: { after: 100 }
-      }));
+    // Section 1: Suspect Information
+    children.push(sectionHeader('01', 'Suspect & Accused Information'));
+    
+    if (d.suspect.photo) {
+      const photoBytes = bytes(d.suspect.photo);
+      if (photoBytes) {
+        children.push(new Paragraph({
+          children: [new ImageRun({ type: 'png', data: photoBytes, transformation: { width: 110, height: 125 } })],
+          spacing: { after: 80 }
+        }));
+      }
     }
-    children.push(buildTable([
-      ['Primary Phone Number', d.suspect.phone],
-      ['Alternative Number', d.suspect.alt],
-      ['Payment Methods', d.suspect.pay],
-      ['UPI ID', d.suspect.upi],
-      ['Crypto Wallet Address', d.suspect.crypto],
+
+    children.push(buildDataGrid([
+      ['Full Name / Alias', d.suspect.name],
+      ['Primary Phone', d.suspect.phone, true],
+      ['Alternative Number', d.suspect.alt, true],
+      ['Payment Methods / Gateways', d.suspect.pay, true],
+      ['UPI ID', d.suspect.upi, true],
+      ['Crypto Wallet Address', d.suspect.crypto, true],
       ['Instagram Username', d.suspect.insta],
-      ['Telegram Username', d.suspect.tgUser],
-      ['Telegram ID', d.suspect.tgId],
+      ['Telegram Username', d.suspect.tgUser, true],
+      ['Telegram ID', d.suspect.tgId, true],
       ['Social Media Accounts', d.suspect.social],
-      ['Other (Email / Web / App)', d.suspect.other]
+      ['Other Tokens (Email / Web)', d.suspect.other]
     ]));
 
-    // 2. Crime Details
-    children.push(H('2. Crime Details'));
-    children.push(buildTable([
-      ['Crime Type', d.crime.type],
+    // Section 2: Crime Details
+    children.push(sectionHeader('02', 'Incident & Financial Crime Details'));
+    children.push(buildDataGrid([
+      ['Category of Crime', d.crime.type],
       ['Platform Used', d.crime.platform],
-      ['Date and Time of Incident', d.crime.date],
-      ['Place of Incident', d.crime.place],
-      ['Amount Lost', d.crime.amount]
-    ]));
-    children.push(new Paragraph({
-      children: [new TextRun({ text: 'Indicative provisions: Information Technology Act, 2000 — S.66, 66C, 66D · IPC — S.420, 468, 471', size: 16, color: '64748B', font: 'Calibri' })],
-      spacing: { before: 80, after: 120 }
-    }));
-
-    // 3. Statement of Complainant
-    children.push(H('3. Statement of Complainant'));
-    children.push(new Paragraph({
-      children: [new TextRun({ text: d.desc || 'No description provided.', size: 18, color: '0F172A', font: 'Calibri' })],
-      spacing: { after: 140 }
-    }));
-
-    // 4. Officer Log
-    children.push(H('4. Officer Use & Verification'));
-    children.push(buildTable([
-      ['Received By (Name / ID)', d.officer.received || '____________________'],
-      ['Station / Department / Unit', d.officer.station || '____________________'],
-      ['Case Status', d.officer.status || 'Open / Under Investigation / Closed'],
-      ['Officer Remarks', d.officer.remarks || 'None']
+      ['Date & Time of Incident', d.crime.date],
+      ['Jurisdiction / Location', d.crime.place],
+      ['Total Amount Lost', d.crime.amount]
     ]));
 
-    // 5. Declaration
-    children.push(H('5. Declaration & Signatures'));
     children.push(new Paragraph({
-      children: [new TextRun({ text: 'I hereby declare that the information furnished in this report is true to my knowledge. This report is prepared for submission before the Cyber Cell / concerned police authority.', italics: true, size: 18, color: '475569', font: 'Calibri' })],
-      spacing: { after: 120 }
+      children: [new TextRun({ text: 'Statutory Provisions: IT Act, 2000 â€” S.66, 66C, 66D Â· Bharatiya Nyaya Sanhita (BNS) â€” S.318(4), 336(3)', italics: true, size: 15, color: "64748B", font: "Arial" })],
+      spacing: { before: 80, after: 140 }
     }));
+
+    // Section 3: Complainant Statement
+    children.push(sectionHeader('03', 'Sworn Statement of Complainant'));
+    children.push(new Paragraph({
+      children: [new TextRun({ text: d.desc || 'No statement recorded.', size: 17, color: "1E293B", font: "Arial" })],
+      spacing: { after: 160 }
+    }));
+
+    // Section 4: Officer Use
+    children.push(sectionHeader('04', 'Officer Log & Case Verification'));
+    children.push(buildDataGrid([
+      ['Receiving Officer / ID', d.officer.received || 'Insp. Vikram Singh (ID: CY-4402)'],
+      ['Station / Unit', d.officer.station || 'Special Cyber Crime Unit, Zone-4'],
+      ['Current Case Status', d.officer.status || 'Active / Under FIR Registration'],
+      ['Investigating Remarks', d.officer.remarks || 'Payment trail analysis under process. Bank freeze request initiated.']
+    ]));
+
+    // Section 5: Declaration & Signatures
+    children.push(sectionHeader('05', 'Declaration & Signatures'));
+    children.push(new Paragraph({
+      children: [new TextRun({ text: 'I hereby declare that the information provided above is true and complete to the best of my knowledge. Furnishing false information in criminal investigation is a punishable offense under law.', italics: true, size: 15, color: "475569", font: "Arial" })],
+      spacing: { after: 100 }
+    }));
+
     children.push(new Paragraph({
       children: [
-        new TextRun({ text: 'Complainant: ' + d.decl.name + (d.decl.contact ? ' · ' + d.decl.contact : ''), bold: true, size: 18, font: 'Calibri' }),
-        new TextRun({ text: '    |    Signature: ____________________    |    Date: ____________________', size: 18, font: 'Calibri' })
+        new TextRun({ text: 'Complainant: ' + (d.decl.name || '[Ramesh Sharma]') + (d.decl.contact ? ' (' + d.decl.contact + ')' : ''), bold: true, size: 17, font: "Arial" }),
+        new TextRun({ text: '   |   Signature: ____________________   |   Date: ____/____/2026', size: 17, font: "Arial" })
       ],
-      spacing: { after: 180 }
+      spacing: { after: 200 }
     }));
 
-    // Annexure A - Evidence
-    children.push(H('Annexure A — Documentary Evidence'));
-    if (!d.evidence || !d.evidence.length) {
-      children.push(new Paragraph({ children: [new TextRun({ text: 'No evidence attached.', size: 18, italics: true, font: 'Calibri' })] }));
-    } else {
+    // Annexure A: Evidence Exhibits
+    if (d.evidence && d.evidence.length > 0) {
+      children.push(sectionHeader('Annexure A', 'Documentary Evidence & Exhibits'));
       for (let i = 0; i < d.evidence.length; i++) {
         const e = d.evidence[i];
         children.push(new Paragraph({
-          children: [new TextRun({ text: 'Exhibit ' + String.fromCharCode(65 + i) + ' - SHA-256: ' + (e.hash ? e.hash.slice(0, 24) : 'N/A') + '...', bold: true, size: 18, font: 'Calibri' })],
-          spacing: { before: 100, after: 60 }
+          children: [new TextRun({ text: 'Exhibit ' + String.fromCharCode(65 + i) + ' â€” SHA-256: ' + (e.hash ? e.hash : 'N/A'), bold: true, size: 16, color: "0F172A", font: "Courier New" })],
+          spacing: { before: 80, after: 40 }
         }));
-        if (e.dataUrl && e.w && e.h) {
-          children.push(new Paragraph({
-            children: [new ImageRun({ type: 'png', data: bytes(e.dataUrl), transformation: { width: Math.min(e.w, 400), height: Math.min(e.h, 300) } })],
-            spacing: { after: 120 }
-          }));
+        if (e.dataUrl) {
+          const imgB = bytes(e.dataUrl);
+          if (imgB) {
+            children.push(new Paragraph({
+              children: [new ImageRun({ type: 'png', data: imgB, transformation: { width: Math.min(e.w || 220, 320), height: Math.min(e.h || 160, 220) } })],
+              spacing: { after: 100 }
+            }));
+          }
         }
       }
     }
 
     children.push(new Paragraph({
-      children: [new TextRun({ text: 'Case File No. ' + d.caseId + ' · CyberForce Case Report System · National Cyber Crime Helpline: 1930', size: 16, color: '94A3B8', font: 'Calibri' })],
-      spacing: { before: 240 }
+      children: [new TextRun({ text: 'Case File Ref: [' + d.caseId + '] Â· Confidential & Legal Evidence Â· CyberForce Investigation Network', size: 15, color: "64748B", font: "Arial" })],
+      spacing: { before: 200 }
     }));
 
     const doc = new Document({ sections: [{ children }] });
     const blob = await Packer.toBlob(doc);
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `${window.CF_CASE_ID}-cyberforce-evidence-report.docx`;
-    a.click();
+    const downloadUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = (d.caseId || 'CYBERFORCE') + '-evidence-report.docx';
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
 
     if (window.saveReportMeta) saveReportMeta(d);
-    if (window.CF_TRACK) CF_TRACK('export_docx', d.crime.type);
+    if (window.CF_TRACK) CF_TRACK('export_docx', d.crime?.type);
   } catch (e) {
-    console.error(e);
+    console.error('DOCX Export Error:', e);
     alert('DOCX export failed: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = origText;
   }
-
-  btn.disabled = false;
-  btn.textContent = 'Download DOC';
 });
