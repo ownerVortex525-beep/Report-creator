@@ -1,5 +1,5 @@
-/* ============ CyberForce Wizard v13 ============ */
-console.log('CyberForce wizard v13 loaded');
+/* ============ CyberForce Wizard v14 ============ */
+console.log('CyberForce wizard v14 loaded');
 let current = 1, startedTracked = false;
 window.CF_CASE_ID = 'CF-' + new Date().getFullYear() + '-' + Math.floor(1000 + Math.random() * 9000);
 
@@ -49,9 +49,15 @@ function loadDraft(){ try { const o = JSON.parse(localStorage.getItem('cf_draft'
 
 function getFormData(){
   const ph = Evidence.photo;
+  /* FIX: photo width/height were never captured here, so any export step that
+     required d.suspect.photoW (the DOCX exporter) silently skipped the photo
+     even when it was uploaded. Evidence.photo carries the same shape as the
+     evidence list items, so read whichever size keys it exposes. */
+  const photoW = ph ? (ph.w || ph.width || null) : null;
+  const photoH = ph ? (ph.h || ph.height || null) : null;
   return {
     caseId: window.CF_CASE_ID, date: new Date().toLocaleString(),
-    suspect: { photo: ph ? ph.dataUrl : '', name: val('sName'), phone: val('sPhone'), alt: val('sAltPhone'), pay: val('sPayment'), upi: val('sUpi'), crypto: val('sCrypto'), insta: val('sInsta'), tgUser: val('sTgUser'), tgId: val('sTgId'), social: val('sSocial'), other: val('sOther') },
+    suspect: { photo: ph ? ph.dataUrl : '', photoW, photoH, name: val('sName'), phone: val('sPhone'), alt: val('sAltPhone'), pay: val('sPayment'), upi: val('sUpi'), crypto: val('sCrypto'), insta: val('sInsta'), tgUser: val('sTgUser'), tgId: val('sTgId'), social: val('sSocial'), other: val('sOther') },
     crime: { type: val('cType'), platform: val('cPlatform'), date: val('cDate') ? new Date(val('cDate')).toLocaleString() : '', place: val('cPlace'), amount: val('cAmount') },
     desc: val('dText'), evidence: Evidence.list,
     officer: { received: val('oReceived'), station: val('oStation'), status: val('oStatus'), remarks: val('oRemarks') },
@@ -62,6 +68,7 @@ function getFormData(){
 function trow(l, v, mono){ return v ? `<tr><td class="rl">${l}</td><td class="rv ${mono ? 'mono' : ''}">${ml(v)}</td></tr>` : ''; }
 function head(title, sub, d){
   return `<div class="sp-spine"></div>
+  <div class="sp-tricolor"><span></span><span></span><span></span></div>
   <div class="sp-head">
     <div class="sp-badge">CYBER<span>FORCE</span></div>
     <h1>${title}</h1>
@@ -80,6 +87,7 @@ function buildReportHTML(d, black){
   const page1 = `
   <div class="${cls}">
     ${head('Cyber Crime Report', 'Official Case File — Confidential', d)}
+    <div class="sp-body">
     <div class="sp-meta"><span>Case File No: <b>${d.caseId}</b></span><span>Date of Report: <b>${d.date}</b></span></div>
     ${d.suspect.name ? `<div class="sp-sec">Subject of Complaint</div><div class="descbox">Complaint against: <b>${esc(d.suspect.name)}</b></div>` : ''}
     <div class="sp-sec">1. Suspect Information</div>
@@ -108,12 +116,14 @@ function buildReportHTML(d, black){
       ${trow('Amount Lost', d.crime.amount)}
     </table>
     <div class="sp-legal">Indicative provisions: Information Technology Act, 2000 — S.66, 66C, 66D · Indian Penal Code — S.420, 468, 471</div>
+    </div>
     <div class="sp-foot">${foot}</div>
   </div>`;
 
   const page2 = `
   <div class="${cls}">
     ${head('Statement & Declaration', 'Continuation of Case File', d)}
+    <div class="sp-body">
     <div class="sp-sec">3. Statement of Complainant</div>
     <div class="descbox">${esc(d.desc) || '—'}</div>
     <div class="sp-sec">4. Officer Use</div>
@@ -131,15 +141,16 @@ function buildReportHTML(d, black){
       <span class="sline">Signature: <span class="line"></span></span>
       <span class="sline">Date: <span class="line"></span></span>
     </div>
-    <div id="qrBox" style="margin:0 28px 14px"></div>
+    <div id="qrBox" style="margin:0"></div>
+    </div>
     <div class="sp-foot">${foot}</div>
   </div>`;
 
   const page3 = `
   <div class="${cls}">
     ${head('Annexure A — Evidence', 'Documentary Evidence & Exhibits', d)}
-    <div style="padding:18px 28px 6px">
-      ${ex || '<div class="descbox" style="margin:0">No evidence attached.</div>'}
+    <div class="sp-body">
+      ${ex ? `<div class="exgrid">${ex}</div>` : '<div class="descbox" style="margin:0">No evidence attached.</div>'}
       <div class="clear"></div>
     </div>
     <div class="sp-foot">${foot}</div>
